@@ -21,8 +21,12 @@ DISTRIBUIDORES = [
     "MG PRO ALISSON",
     "EBAY",
     "SUPER MINI",
-    "DIECAST USA"
+    "DIECAST USA",
+    "VEIGA"
 ]
+
+# Distribuidores cujo preço já está em reais (sem conversão de dólar)
+DISTRIBUIDORES_SEM_DOLAR = ["VEIGA"]
 
 TIPOS_PREVENDA = ["PRÉ VENDA EUA", "LONGO PRAZO"]
 
@@ -46,6 +50,8 @@ def calcular_custo(distribuidor: str, preco: float, dolar: float, frete: float) 
         return ((preco * 1) * 1.25) + frete
     elif distribuidor == "DIECAST USA":
         return (preco * dolar) + frete
+    elif distribuidor == "VEIGA":
+        return preco + frete
     return 0
 
 
@@ -68,6 +74,8 @@ def calcular_preco(distribuidor: str, preco: float, dolar: float, frete: float) 
         return (((preco * 1) * 1.25) + frete) * 1.25
     elif distribuidor == "DIECAST USA":
         return ((preco * dolar) + frete) * 1.26
+    elif distribuidor == "VEIGA":
+        return (preco + frete) * 1.31
     return 0
 
 
@@ -85,11 +93,19 @@ with col_form:
 
     tipo = st.selectbox("Tipo de Pré-Venda", TIPOS_PREVENDA)
 
+    sem_dolar = distribuidor in DISTRIBUIDORES_SEM_DOLAR
+
     c1, c2, c3 = st.columns(3)
     with c1:
-        preco_str = st.text_input("Preço (USD)", placeholder="Ex: 29.99")
+        label_preco = "Preço (R$)" if sem_dolar else "Preço (USD)"
+        preco_str = st.text_input(label_preco, placeholder="Ex: 29.99")
     with c2:
-        dolar_str = st.text_input("Dólar (R$)", placeholder="Ex: 5.50")
+        dolar_str = st.text_input(
+            "Dólar (R$)",
+            placeholder="Ex: 5.50",
+            disabled=sem_dolar,
+            help="Não usado neste distribuidor (preço já em reais)." if sem_dolar else None,
+        )
     with c3:
         frete_str = st.text_input("Frete (R$)", placeholder="Ex: 15.00")
 
@@ -111,8 +127,12 @@ with col_result:
         erros = []
         if not nome.strip():
             erros.append("Informe o nome da miniatura.")
-        if not preco_str.strip() or not dolar_str.strip() or not frete_str.strip():
-            erros.append("Preencha todos os valores (Preço, Dólar, Frete).")
+        if sem_dolar:
+            if not preco_str.strip() or not frete_str.strip():
+                erros.append("Preencha todos os valores (Preço, Frete).")
+        else:
+            if not preco_str.strip() or not dolar_str.strip() or not frete_str.strip():
+                erros.append("Preencha todos os valores (Preço, Dólar, Frete).")
         if entrada_fixa_check and not entrada_fixa_str.strip():
             erros.append("Informe o valor da entrada fixa.")
         if tipo == "LONGO PRAZO" and not data.strip():
@@ -124,7 +144,7 @@ with col_result:
         else:
             try:
                 preco = float(preco_str.replace(",", "."))
-                dolar = float(dolar_str.replace(",", "."))
+                dolar = 0.0 if sem_dolar else float(dolar_str.replace(",", "."))
                 frete = float(frete_str.replace(",", "."))
 
                 valor_total = math.ceil(calcular_preco(distribuidor, preco, dolar, frete))
