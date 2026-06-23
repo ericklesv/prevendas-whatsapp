@@ -178,19 +178,20 @@ with col_result:
                     f"""<script>
 (function(){{
     var t = {json.dumps(mensagem)};
-    if (navigator.clipboard && window.isSecureContext) {{
-        navigator.clipboard.writeText(t).catch(function() {{ fb(t); }});
+    var p = window.parent;
+    if (p.navigator.clipboard) {{
+        p.navigator.clipboard.writeText(t).catch(function() {{ fb(t); }});
     }} else {{ fb(t); }}
     function fb(t) {{
-        var e = document.createElement('textarea');
+        var e = p.document.createElement('textarea');
         e.value = t;
         e.style.position = 'fixed';
         e.style.opacity = '0';
-        document.body.appendChild(e);
+        p.document.body.appendChild(e);
         e.focus();
         e.select();
-        try {{ document.execCommand('copy'); }} catch(err) {{}}
-        document.body.removeChild(e);
+        try {{ p.document.execCommand('copy'); }} catch(err) {{}}
+        p.document.body.removeChild(e);
     }}
 }})();
 </script>""",
@@ -206,7 +207,6 @@ with col_result:
 
     if mensagem_atual:
         st.code(mensagem_atual, language=None)
-        st.info("💡 Clique no ícone de cópia no canto superior direito da caixa acima para copiar.")
 
         if custo_atual is not None:
             st.divider()
