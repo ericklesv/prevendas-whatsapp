@@ -78,6 +78,7 @@ streamlit run app.py
 
 ## Histórico de mudanças (manter atualizado)
 
+- **2026-06-22** — Auto-cópia ao clicar em "Gerar Mensagem": usa `streamlit.components.v1.html` para injetar JS que chama `navigator.clipboard.writeText` (com fallback via `execCommand('copy')`). Toast `st.toast` confirma visualmente. Novos imports: `streamlit.components.v1` e `json`.
 - **2026-06-17** — Adicionado distribuidor **VEIGA** (preço já em reais, sem dólar). Fórmula: custo = `preco + frete`; preço = `(preco + frete) * 1.31`. Criada lista `DISTRIBUIDORES_SEM_DOLAR`, campo Dólar desabilitado/opcional e validação ajustada para esses casos.
 - **2026-06-17** — Criação deste CLAUDE.md a partir da análise inicial do projeto.
 - **fb165ab** — Migração do app para Streamlit (deploy Railway).

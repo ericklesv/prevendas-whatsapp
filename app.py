@@ -4,7 +4,9 @@ Especializado em miniaturas colecionáveis
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import math
+import json
 
 st.set_page_config(
     page_title="Pré-Vendas WhatsApp - Miniaturas",
@@ -171,6 +173,30 @@ with col_result:
 
                 st.session_state["mensagem"] = mensagem
                 st.session_state["custo"] = custo
+
+                components.html(
+                    f"""<script>
+(function(){{
+    var t = {json.dumps(mensagem)};
+    if (navigator.clipboard && window.isSecureContext) {{
+        navigator.clipboard.writeText(t).catch(function() {{ fb(t); }});
+    }} else {{ fb(t); }}
+    function fb(t) {{
+        var e = document.createElement('textarea');
+        e.value = t;
+        e.style.position = 'fixed';
+        e.style.opacity = '0';
+        document.body.appendChild(e);
+        e.focus();
+        e.select();
+        try {{ document.execCommand('copy'); }} catch(err) {{}}
+        document.body.removeChild(e);
+    }}
+}})();
+</script>""",
+                    height=0,
+                )
+                st.toast("✅ Mensagem copiada automaticamente!")
 
             except ValueError:
                 st.error("Valores inválidos! Use números válidos (ex: 29.99).")
