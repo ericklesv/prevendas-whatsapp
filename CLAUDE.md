@@ -46,6 +46,14 @@ Lista `DISTRIBUIDORES` com 10 fornecedores: `ALISSON`, `MINI GT`, `JCAR`, `MINI 
 
 ⚠️ **Importante:** as fórmulas de custo e preço estão duplicadas (o `calcular_preco` repete a expressão do custo e multiplica pela margem). Ao alterar uma fórmula de custo, **alterar também em `calcular_preco`** para manter consistência.
 
+### Preço fixo (opcional)
+Checkbox **"💵 Preço fixo (informar valor de venda)"** no topo do formulário. Quando marcado, o app **pula todo o cálculo**: o usuário informa o **preço de venda final** e o sistema só formata a mensagem.
+- Esconde Distribuidor, Preço, Dólar e Frete; mostra apenas o campo **"Preço de Venda (R$)"**.
+- `distribuidor = None`, `sem_dolar = False`, e `valor_total` recebe o valor exato informado (**sem `math.ceil`** — respeita o preço definido pelo usuário).
+- **Sem custo** (`custo = None`), então a "Informação Interna" não aparece.
+- Combina normalmente com tipo de pré-venda, entrada fixa e destaques (tudo usa `valor_total`).
+- Validação: exige apenas o nome e o preço de venda (+ data se LONGO PRAZO, + entrada se marcada).
+
 ### Tipos de pré-venda (`TIPOS_PREVENDA`)
 - **`PRÉ VENDA EUA`** — envio em até 2 meses. Sem entrada fixa: divide em 50% agora + 50% na chegada.
 - **`LONGO PRAZO`** — exige data prevista de lançamento. Sem entrada fixa: R$25,00 na reserva + restante na chegada.
@@ -92,6 +100,7 @@ streamlit run app.py
 
 ## Histórico de mudanças (manter atualizado)
 
+- **2026-06-25** — Adicionado modo **Preço fixo (opcional)**: checkbox que esconde Distribuidor/Preço/Dólar/Frete e mostra só "Preço de Venda (R$)". O app pula o cálculo e usa o valor exato informado (sem `math.ceil`); `custo = None` (Informação Interna some). Integra com tipo, entrada fixa e destaques. Validação ajustada. Ver seção "Preço fixo (opcional)".
 - **2026-06-24** — Adicionados 3 checkboxes de **Destaques (opcional)** que acrescentam linhas no final da mensagem, separadas por linha em branco: ÚLTIMA UNIDADE (`🔥 APENAS 1 UNIDADE`), EXCLUSIVA NO WHATSAPP (`📲 PRÉ VENDA EXCLUSIVA NO WHATSAPP`) e CARTÃO DE CRÉDITO (`💳 Dividido em até 12x no cartão de crédito com apenas 10% de taxa.`). Ver seção "Destaques (opcional)".
 - **2026-06-24** — O campo **Dólar** passa a lembrar o último valor entre recargas/reaberturas do navegador. Persistência via `localStorage` (chave `prevendas_dolar`) com a URL (`?dolar=`) como ponte para o Python: componente JS no topo sincroniza localStorage→URL (recarrega 1x se divergente), `st.session_state["dolar_str"]` inicializa de `st.query_params`, e o `text_input` usa `key="dolar_str"`. O componente da auto-cópia salva o valor no `localStorage` + `history.replaceState` ao gerar (apenas se não vazio). Ver seção "Persistência do dólar".
 - **2026-06-22** — Auto-cópia ao clicar em "Gerar Mensagem": usa `streamlit.components.v1.html` para injetar JS que chama `navigator.clipboard.writeText` (com fallback via `execCommand('copy')`). Toast `st.toast` confirma visualmente. Novos imports: `streamlit.components.v1` e `json`.

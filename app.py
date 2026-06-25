@@ -117,26 +117,43 @@ col_form, col_result = st.columns([1, 1], gap="large")
 with col_form:
     nome = st.text_input("Nome da Miniatura", placeholder="Ex: Porsche 911 GT3 RS")
 
-    distribuidor = st.selectbox("Distribuidor", DISTRIBUIDORES)
+    preco_fixo_check = st.checkbox(
+        "💵 Preço fixo (informar valor de venda)",
+        help="Pula o cálculo: você informa o preço final de venda e o app apenas formata a mensagem.",
+    )
+
+    if not preco_fixo_check:
+        distribuidor = st.selectbox("Distribuidor", DISTRIBUIDORES)
+        sem_dolar = distribuidor in DISTRIBUIDORES_SEM_DOLAR
+    else:
+        distribuidor = None
+        sem_dolar = False
 
     tipo = st.selectbox("Tipo de Pré-Venda", TIPOS_PREVENDA)
 
-    sem_dolar = distribuidor in DISTRIBUIDORES_SEM_DOLAR
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        label_preco = "Preço (R$)" if sem_dolar else "Preço (USD)"
-        preco_str = st.text_input(label_preco, placeholder="Ex: 29.99")
-    with c2:
-        dolar_str = st.text_input(
-            "Dólar (R$)",
-            key="dolar_str",
-            placeholder="Ex: 5.50",
-            disabled=sem_dolar,
-            help="Não usado neste distribuidor (preço já em reais)." if sem_dolar else None,
-        )
-    with c3:
-        frete_str = st.text_input("Frete (R$)", placeholder="Ex: 15.00")
+    # Modo "preço fixo": pede só o preço de venda final.
+    # Caso contrário: trio Preço/Dólar/Frete usado no cálculo.
+    dolar_str = ""
+    preco_str = ""
+    frete_str = ""
+    preco_venda_str = ""
+    if preco_fixo_check:
+        preco_venda_str = st.text_input("Preço de Venda (R$)", placeholder="Ex: 250.00")
+    else:
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            label_preco = "Preço (R$)" if sem_dolar else "Preço (USD)"
+            preco_str = st.text_input(label_preco, placeholder="Ex: 29.99")
+        with c2:
+            dolar_str = st.text_input(
+                "Dólar (R$)",
+                key="dolar_str",
+                placeholder="Ex: 5.50",
+                disabled=sem_dolar,
+                help="Não usado neste distribuidor (preço já em reais)." if sem_dolar else None,
+            )
+        with c3:
+            frete_str = st.text_input("Frete (R$)", placeholder="Ex: 15.00")
 
     entrada_fixa_check = st.checkbox("Entrada Fixa")
     entrada_fixa_str = ""
@@ -161,7 +178,10 @@ with col_result:
         erros = []
         if not nome.strip():
             erros.append("Informe o nome da miniatura.")
-        if sem_dolar:
+        if preco_fixo_check:
+            if not preco_venda_str.strip():
+                erros.append("Informe o preço de venda.")
+        elif sem_dolar:
             if not preco_str.strip() or not frete_str.strip():
                 erros.append("Preencha todos os valores (Preço, Frete).")
         else:
@@ -177,12 +197,17 @@ with col_result:
                 st.error(e)
         else:
             try:
-                preco = float(preco_str.replace(",", "."))
-                dolar = 0.0 if sem_dolar else float(dolar_str.replace(",", "."))
-                frete = float(frete_str.replace(",", "."))
+                if preco_fixo_check:
+                    # Preço informado manualmente: usa o valor exato, sem cálculo.
+                    valor_total = float(preco_venda_str.replace(",", "."))
+                    custo = None
+                else:
+                    preco = float(preco_str.replace(",", "."))
+                    dolar = 0.0 if sem_dolar else float(dolar_str.replace(",", "."))
+                    frete = float(frete_str.replace(",", "."))
 
-                valor_total = math.ceil(calcular_preco(distribuidor, preco, dolar, frete))
-                custo = calcular_custo(distribuidor, preco, dolar, frete)
+                    valor_total = math.ceil(calcular_preco(distribuidor, preco, dolar, frete))
+                    custo = calcular_custo(distribuidor, preco, dolar, frete)
 
                 entrada_fixa = None
                 if entrada_fixa_check:
