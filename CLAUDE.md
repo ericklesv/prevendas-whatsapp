@@ -53,6 +53,14 @@ Lista `DISTRIBUIDORES` com 10 fornecedores: `ALISSON`, `MINI GT`, `JCAR`, `MINI 
 ### Entrada fixa (opcional)
 Checkbox que, quando marcada, substitui a divisão padrão (50/50 ou R$25) por um valor de entrada informado pelo usuário; o restante = total − entrada.
 
+### Destaques (opcional)
+Três checkboxes ("Destaques (opcional)") que acrescentam linhas **no final** da mensagem, cada uma separada por uma linha em branco. São independentes do tipo de pré-venda e da entrada fixa:
+- **ÚLTIMA UNIDADE** → `🔥 APENAS 1 UNIDADE`
+- **EXCLUSIVA NO WHATSAPP** → `📲 PRÉ VENDA EXCLUSIVA NO WHATSAPP`
+- **CARTÃO DE CRÉDITO** → `💳 Dividido em até 12x no cartão de crédito com apenas 10% de taxa.`
+
+Implementação: lista `destaques` montada conforme os checkboxes marcados, anexada com `mensagem + "\n\n" + "\n\n".join(destaques)`. Para adicionar/alterar um destaque, mexer apenas nessa lista.
+
 ### Formatação de valores
 - O preço final é arredondado para cima com `math.ceil`.
 - Inputs aceitam vírgula ou ponto decimal (`.replace(",", ".")`).
@@ -62,6 +70,12 @@ Checkbox que, quando marcada, substitui a divisão padrão (50/50 ou R$25) por u
 - Layout em duas colunas: formulário (esquerda) / mensagem gerada (direita).
 - Resultado guardado em `st.session_state` (`mensagem`, `custo`).
 - Exibe **"Informação Interna"** com o custo (uso interno, não vai pra mensagem do cliente).
+
+### Persistência do dólar (lembrar último valor)
+O campo **Dólar** lembra o último valor entre recargas/reaberturas do navegador:
+- **Fonte da verdade:** `localStorage` do navegador (chave `prevendas_dolar`).
+- **Ponte para o Python:** um componente JS no topo lê o `localStorage` e, se divergente da URL, injeta `?dolar=` recarregando a página uma vez. O Python pré-preenche o campo com `st.query_params.get("dolar", "")`, inicializando `st.session_state["dolar_str"]` **antes** do widget. O `text_input` do dólar usa `key="dolar_str"`.
+- **Ao gerar a mensagem:** o mesmo componente JS da auto-cópia salva o dólar no `localStorage` e atualiza a URL via `history.replaceState` (sem recarregar). Só salva se o campo não estiver vazio (não apaga o lembrado em distribuidores sem dólar, ex: VEIGA).
 
 ## Como rodar localmente
 
@@ -78,6 +92,8 @@ streamlit run app.py
 
 ## Histórico de mudanças (manter atualizado)
 
+- **2026-06-24** — Adicionados 3 checkboxes de **Destaques (opcional)** que acrescentam linhas no final da mensagem, separadas por linha em branco: ÚLTIMA UNIDADE (`🔥 APENAS 1 UNIDADE`), EXCLUSIVA NO WHATSAPP (`📲 PRÉ VENDA EXCLUSIVA NO WHATSAPP`) e CARTÃO DE CRÉDITO (`💳 Dividido em até 12x no cartão de crédito com apenas 10% de taxa.`). Ver seção "Destaques (opcional)".
+- **2026-06-24** — O campo **Dólar** passa a lembrar o último valor entre recargas/reaberturas do navegador. Persistência via `localStorage` (chave `prevendas_dolar`) com a URL (`?dolar=`) como ponte para o Python: componente JS no topo sincroniza localStorage→URL (recarrega 1x se divergente), `st.session_state["dolar_str"]` inicializa de `st.query_params`, e o `text_input` usa `key="dolar_str"`. O componente da auto-cópia salva o valor no `localStorage` + `history.replaceState` ao gerar (apenas se não vazio). Ver seção "Persistência do dólar".
 - **2026-06-22** — Auto-cópia ao clicar em "Gerar Mensagem": usa `streamlit.components.v1.html` para injetar JS que chama `navigator.clipboard.writeText` (com fallback via `execCommand('copy')`). Toast `st.toast` confirma visualmente. Novos imports: `streamlit.components.v1` e `json`.
 - **2026-06-17** — Adicionado distribuidor **VEIGA** (preço já em reais, sem dólar). Fórmula: custo = `preco + frete`; preço = `(preco + frete) * 1.31`. Criada lista `DISTRIBUIDORES_SEM_DOLAR`, campo Dólar desabilitado/opcional e validação ajustada para esses casos.
 - **2026-06-17** — Criação deste CLAUDE.md a partir da análise inicial do projeto.

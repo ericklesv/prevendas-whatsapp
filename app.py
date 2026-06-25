@@ -83,6 +83,32 @@ def calcular_preco(distribuidor: str, preco: float, dolar: float, frete: float) 
 
 # ── Layout ──────────────────────────────────────────────────────────────────
 
+# Lembrar o último valor do dólar: o localStorage do navegador é a fonte da
+# verdade. Este componente injeta o valor salvo na URL (?dolar=) para que o
+# Python consiga pré-preencher o campo. Só recarrega quando estão divergentes.
+components.html(
+    """<script>
+(function(){
+    var p = window.parent;
+    try {
+        var params = new URLSearchParams(p.location.search);
+        var saved = p.localStorage.getItem('prevendas_dolar') || '';
+        var cur = params.get('dolar') || '';
+        if (saved && saved !== cur) {
+            params.set('dolar', saved);
+            p.location.search = params.toString();
+        }
+    } catch(e) {}
+})();
+</script>""",
+    height=0,
+)
+
+# Pré-preenche o campo dólar com o último valor lembrado (vindo do localStorage
+# via URL). Só inicializa uma vez por sessão para não sobrescrever edições.
+if "dolar_str" not in st.session_state:
+    st.session_state["dolar_str"] = st.query_params.get("dolar", "")
+
 st.title("🚗 Pré-Vendas WhatsApp")
 st.caption("Miniaturas Colecionáveis")
 
@@ -104,6 +130,7 @@ with col_form:
     with c2:
         dolar_str = st.text_input(
             "Dólar (R$)",
+            key="dolar_str",
             placeholder="Ex: 5.50",
             disabled=sem_dolar,
             help="Não usado neste distribuidor (preço já em reais)." if sem_dolar else None,
@@ -119,6 +146,11 @@ with col_form:
     data = ""
     if tipo == "LONGO PRAZO":
         data = st.text_input("Data Prevista de Lançamento", placeholder="Ex: Março/2026")
+
+    st.markdown("**Destaques (opcional)**")
+    ultima_unidade = st.checkbox("ÚLTIMA UNIDADE")
+    exclusiva_whatsapp = st.checkbox("EXCLUSIVA NO WHATSAPP")
+    cartao_credito = st.checkbox("CARTÃO DE CRÉDITO")
 
     gerar = st.button("📝 Gerar Mensagem", use_container_width=True, type="primary")
 
@@ -171,6 +203,18 @@ with col_result:
                         valor_restante = round(valor_total - 25, 2)
                         mensagem = f"{nome}\n\n💰 R${valor_total:.2f}\n\n➗ R$25,00 na reserva e R${valor_restante:.2f} quando chegar\n\n📅 Previsão de lançamento é {data}\n(podendo ocorrer antecipadamente ou posterior ao prazo informado)."
 
+                # Linhas de destaque (opcionais), no final da mensagem,
+                # cada uma separada por uma linha em branco.
+                destaques = []
+                if ultima_unidade:
+                    destaques.append("🔥 APENAS 1 UNIDADE")
+                if exclusiva_whatsapp:
+                    destaques.append("📲 PRÉ VENDA EXCLUSIVA NO WHATSAPP")
+                if cartao_credito:
+                    destaques.append("💳 Dividido em até 12x no cartão de crédito com apenas 10% de taxa.")
+                if destaques:
+                    mensagem = mensagem + "\n\n" + "\n\n".join(destaques)
+
                 st.session_state["mensagem"] = mensagem
                 st.session_state["custo"] = custo
 
@@ -178,6 +222,7 @@ with col_result:
                     f"""<script>
 (function(){{
     var t = {json.dumps(mensagem)};
+    var d = {json.dumps(dolar_str.strip())};
     var p = window.parent;
     if (p.navigator.clipboard) {{
         p.navigator.clipboard.writeText(t).catch(function() {{ fb(t); }});
@@ -192,6 +237,15 @@ with col_result:
         e.select();
         try {{ p.document.execCommand('copy'); }} catch(err) {{}}
         p.document.body.removeChild(e);
+    }}
+    // Lembrar o último dólar usado (localStorage + URL, sem recarregar).
+    if (d) {{
+        try {{
+            p.localStorage.setItem('prevendas_dolar', d);
+            var u = new URL(p.location.href);
+            u.searchParams.set('dolar', d);
+            p.history.replaceState(null, '', u);
+        }} catch(err) {{}}
     }}
 }})();
 </script>""",
