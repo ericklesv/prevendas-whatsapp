@@ -116,6 +116,7 @@ col_form, col_result = st.columns([1, 1], gap="large")
 
 with col_form:
     nome = st.text_input("Nome da Miniatura", placeholder="Ex: Porsche 911 GT3 RS")
+    sku = st.text_input("SKU (opcional)", placeholder="Ex: HKF12")
 
     preco_fixo_check = st.checkbox(
         "💵 Preço fixo (informar valor de venda)",
@@ -213,20 +214,25 @@ with col_result:
                 if entrada_fixa_check:
                     entrada_fixa = float(entrada_fixa_str.replace(",", "."))
 
+                # Bloco do nome: inclui a linha de SKU logo abaixo, se informado.
+                nome_bloco = nome
+                if sku.strip():
+                    nome_bloco = f"{nome}\n🏷️ SKU: {sku.strip()}"
+
                 if tipo == "PRÉ VENDA EUA":
                     if entrada_fixa is not None:
                         valor_restante_pv = round(valor_total - entrada_fixa, 2)
-                        mensagem = f"*PRÉ VENDA EUA*\n\n{nome}\n\n💰 R${valor_total:.2f}\n\n➗ R${entrada_fixa:.2f} agora + R${valor_restante_pv:.2f} quando chegar\n\n📦 Será enviado em até 2 meses"
+                        mensagem = f"*PRÉ VENDA EUA*\n\n{nome_bloco}\n\n💰 R${valor_total:.2f}\n\n➗ R${entrada_fixa:.2f} agora + R${valor_restante_pv:.2f} quando chegar\n\n📦 Será enviado em até 2 meses"
                     else:
                         valor_50 = valor_total / 2
-                        mensagem = f"*PRÉ VENDA EUA*\n\n{nome}\n\n💰 R${valor_total:.2f}\n\n➗ R${valor_50:.2f} agora + R${valor_50:.2f} quando chegar\n\n📦 Será enviado em até 2 meses"
+                        mensagem = f"*PRÉ VENDA EUA*\n\n{nome_bloco}\n\n💰 R${valor_total:.2f}\n\n➗ R${valor_50:.2f} agora + R${valor_50:.2f} quando chegar\n\n📦 Será enviado em até 2 meses"
                 else:
                     if entrada_fixa is not None:
                         valor_restante = round(valor_total - entrada_fixa, 2)
-                        mensagem = f"{nome}\n\n💰 R${valor_total:.2f}\n\n➗ R${entrada_fixa:.2f} na reserva e R${valor_restante:.2f} quando chegar\n\n📅 Previsão de lançamento é {data}\n(podendo ocorrer antecipadamente ou posterior ao prazo informado)."
+                        mensagem = f"{nome_bloco}\n\n💰 R${valor_total:.2f}\n\n➗ R${entrada_fixa:.2f} na reserva e R${valor_restante:.2f} quando chegar\n\n📅 Previsão de lançamento é {data}\n(podendo ocorrer antecipadamente ou posterior ao prazo informado)."
                     else:
                         valor_restante = round(valor_total - 25, 2)
-                        mensagem = f"{nome}\n\n💰 R${valor_total:.2f}\n\n➗ R$25,00 na reserva e R${valor_restante:.2f} quando chegar\n\n📅 Previsão de lançamento é {data}\n(podendo ocorrer antecipadamente ou posterior ao prazo informado)."
+                        mensagem = f"{nome_bloco}\n\n💰 R${valor_total:.2f}\n\n➗ R$25,00 na reserva e R${valor_restante:.2f} quando chegar\n\n📅 Previsão de lançamento é {data}\n(podendo ocorrer antecipadamente ou posterior ao prazo informado)."
 
                 # Linhas de destaque (opcionais), no final da mensagem,
                 # cada uma separada por uma linha em branco.

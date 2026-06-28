@@ -54,6 +54,12 @@ Checkbox **"💵 Preço fixo (informar valor de venda)"** no topo do formulário
 - Combina normalmente com tipo de pré-venda, entrada fixa e destaques (tudo usa `valor_total`).
 - Validação: exige apenas o nome e o preço de venda (+ data se LONGO PRAZO, + entrada se marcada).
 
+### Campo SKU (opcional)
+Campo de texto **"SKU (opcional)"** logo abaixo do nome da miniatura. Quando preenchido, acrescenta uma linha `🏷️ SKU: <valor>` **logo abaixo do nome** (sem linha em branco, colado ao nome) na mensagem gerada.
+- Vazio: nada é adicionado (sem validação — é opcional).
+- Implementação: variável `nome_bloco` (= `nome`, ou `nome + "\n🏷️ SKU: ..."` se houver SKU). Todas as mensagens usam `{nome_bloco}` no lugar de `{nome}`.
+- Funciona em todos os modos (cálculo normal, preço fixo, ambos os tipos de pré-venda, com/sem entrada fixa e destaques).
+
 ### Tipos de pré-venda (`TIPOS_PREVENDA`)
 - **`PRÉ VENDA EUA`** — envio em até 2 meses. Sem entrada fixa: divide em 50% agora + 50% na chegada.
 - **`LONGO PRAZO`** — exige data prevista de lançamento. Sem entrada fixa: R$25,00 na reserva + restante na chegada.
@@ -100,6 +106,7 @@ streamlit run app.py
 
 ## Histórico de mudanças (manter atualizado)
 
+- **2026-06-28** — Adicionado campo **SKU (opcional)** abaixo do nome. Quando preenchido, insere a linha `🏷️ SKU: <valor>` colada logo abaixo do nome na mensagem. Implementado via variável `nome_bloco`, usada no lugar de `{nome}` em todas as 4 mensagens. Sem validação (opcional). Ver seção "Campo SKU (opcional)".
 - **2026-06-25** — Adicionado modo **Preço fixo (opcional)**: checkbox que esconde Distribuidor/Preço/Dólar/Frete e mostra só "Preço de Venda (R$)". O app pula o cálculo e usa o valor exato informado (sem `math.ceil`); `custo = None` (Informação Interna some). Integra com tipo, entrada fixa e destaques. Validação ajustada. Ver seção "Preço fixo (opcional)".
 - **2026-06-24** — Adicionados 3 checkboxes de **Destaques (opcional)** que acrescentam linhas no final da mensagem, separadas por linha em branco: ÚLTIMA UNIDADE (`🔥 APENAS 1 UNIDADE`), EXCLUSIVA NO WHATSAPP (`📲 PRÉ VENDA EXCLUSIVA NO WHATSAPP`) e CARTÃO DE CRÉDITO (`💳 Dividido em até 12x no cartão de crédito com apenas 10% de taxa.`). Ver seção "Destaques (opcional)".
 - **2026-06-24** — O campo **Dólar** passa a lembrar o último valor entre recargas/reaberturas do navegador. Persistência via `localStorage` (chave `prevendas_dolar`) com a URL (`?dolar=`) como ponte para o Python: componente JS no topo sincroniza localStorage→URL (recarrega 1x se divergente), `st.session_state["dolar_str"]` inicializa de `st.query_params`, e o `text_input` usa `key="dolar_str"`. O componente da auto-cópia salva o valor no `localStorage` + `history.replaceState` ao gerar (apenas se não vazio). Ver seção "Persistência do dólar".
